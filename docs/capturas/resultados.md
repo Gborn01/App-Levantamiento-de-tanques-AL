@@ -3,7 +3,7 @@
 | # | Criterio | Resultado | Detalle |
 |---|---|---|---|
 | 1 | Abrir la app | ✅ | Pantalla de inicio visible, sin cierres |
-| 2 | Crear cliente | ❌ | No se encontró el campo 'Ciudad' |
+| 2 | Crear cliente | ❌ | No se encontró 'Guardar cliente' en pantalla |
 | 3 | Entrar al cliente | ❌ | El detalle no muestra el cliente |
 | 4 | Crear varios tanques | ❌ | No se volvió al detalle del cliente |
 | 5 | Completar un levantamiento (asistente 8 pasos) | ❌ | No se encontró '+ Nuevo tanque' en pantalla |
