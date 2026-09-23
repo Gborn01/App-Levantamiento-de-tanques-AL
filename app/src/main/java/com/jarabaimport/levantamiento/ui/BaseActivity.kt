@@ -56,6 +56,9 @@ abstract class BaseActivity : Activity() {
     private fun styleSystemBars() {
         window.statusBarColor = Color.WHITE
         window.navigationBarColor = Color.WHITE
+        // Crear la DecorView antes de pedir el insetsController: en onCreate (antes de setContentView)
+        // todavía no existe y PhoneWindow.getInsetsController() lanza NullPointerException en API 30+.
+        window.decorView
         if (Build.VERSION.SDK_INT >= 30) {
             window.insetsController?.setSystemBarsAppearance(
                 WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,

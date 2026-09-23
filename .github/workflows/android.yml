@@ -49,28 +49,16 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Prueba de arranque en emulador (sin red) + logcat
+      - name: Criterios de aceptación en emulador (sin red) + capturas
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
           arch: x86_64
           target: google_apis
+          profile: pixel_5
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-          script: |
-            mkdir -p evidence
-            adb shell svc wifi disable || true
-            adb shell svc data disable || true
-            adb install -r app/build/outputs/apk/debug/*.apk
-            adb logcat -c
-            adb shell am start -W -n com.jarabaimport.levantamiento/.ui.home.MainActivity
-            sleep 8
-            adb exec-out screencap -p > evidence/inicio.png || true
-            adb logcat -d > evidence/logcat.txt || true
-            adb logcat -d -b crash > evidence/crash.txt || true
-            if grep -q "FATAL EXCEPTION" evidence/logcat.txt; then echo "LA APP SE CERRÓ:"; grep -A40 "FATAL EXCEPTION" evidence/logcat.txt; exit 1; fi
-            adb shell pidof com.jarabaimport.levantamiento || (echo "La app no está en ejecución"; exit 1)
-            echo "ARRANQUE OK"
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back emulated
+          script: python3 tools/e2e/flujo_aceptacion.py app/build/outputs/apk/debug/app-debug.apk
 
       - name: Subir evidencias
         if: always()
