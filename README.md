@@ -194,16 +194,31 @@ El CSV (`schema_version = 1`) ya contiene esas columnas para alimentar una herra
 
 ---
 
-## 10. Verificación realizada en V1
-- ✔ Compilación completa sin errores (Kotlin 2.0.21, API 35) y APK debug + release firmadas y verificadas (v2+v3).
-- ✔ Manifiesto: minSdk 26, targetSdk 34, **sin ningún permiso** (ni Internet ni almacenamiento).
-- ✔ Esquema SQLite, mapeo de las 72 columnas del tanque, consultas de lista/búsqueda/recientes y borrado en cascada
-  ejecutados contra SQLite real.
-- ✔ 58 pruebas de lógica: cálculos, validaciones, autoguardado seguro, 7 datos y estados, duplicado, CSV.
-- ✖ **No se pudo ejecutar en un emulador** en el entorno de desarrollo. La prueba en pantalla debe hacerse en un
-  teléfono siguiendo la lista del §11.
+## 10. Verificación
 
-## 11. Lista de aceptación (probar en el teléfono)
+Cada ejecución de GitHub Actions hace:
+- ✔ **Pruebas de lógica** (`./gradlew testDebugUnitTest`, 58 comprobaciones): cálculos, validaciones, autoguardado
+  seguro, 7 datos y estados, duplicado, CSV.
+- ✔ **Compilación con Gradle** (AGP 8.7.3, Kotlin 2.0.21, compileSdk 35) de las APK debug y release.
+- ✔ **Recorrido de los 17 criterios de aceptación** en un emulador Android 13 (Pixel 5) en **modo avión**,
+  con `tools/e2e/flujo_aceptacion.py` (adb + uiautomator): crea cliente y tanques, completa el asistente de 8 pasos,
+  toma una foto con la cámara, duplica, edita, cierra y reabre la app, busca, y genera PDF y CSV.
+  Las capturas quedan en el artefacto `evidence` (y en `docs/capturas/` al lanzar el flujo manualmente con
+  *Run workflow → guardar capturas*).
+
+Resultado del último recorrido: [`docs/capturas/resultados.md`](docs/capturas/resultados.md) (17/17 ✅).
+
+| Inicio | Asistente (geometría) | Fotos | Resumen |
+|---|---|---|---|
+| <img src="docs/capturas/01_inicio.png" width="180"> | <img src="docs/capturas/06_paso3_geometria.png" width="180"> | <img src="docs/capturas/11_paso7_foto_tomada.png" width="180"> | <img src="docs/capturas/13_resumen_tanque.png" width="180"> |
+
+### 10.1 Causa del cierre al abrir (corregido)
+En Android 11 o superior (API 30+), `BaseActivity.onCreate` pedía `window.insetsController` **antes** de que existiera
+la vista raíz de la ventana (se crea en `setContentView`), y Android lanzaba `NullPointerException`
+(`PhoneWindow.getInsetsController`). Afectaba a todas las pantallas, por eso la app se cerraba nada más abrir en el
+Xiaomi (Android 11–15). Se corrige creando la vista raíz antes (`window.decorView`) en `ui/BaseActivity.kt`.
+
+## 11. Lista de aceptación (también en el teléfono)
 1. Abrir la app · 2. Crear un cliente · 3. Entrar al cliente · 4. Crear varios tanques · 5. Completar un levantamiento ·
 6. Guardarlo · 7. Cerrar la app (quitarla de recientes) · 8. Volver a abrirla · 9. Encontrar los datos ·
 10. Editar un tanque · 11. Duplicar un tanque · 12. Tomar fotografías · 13. Verlas en el tanque ·
