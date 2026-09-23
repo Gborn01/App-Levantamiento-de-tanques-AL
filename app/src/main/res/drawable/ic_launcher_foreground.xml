@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icono genérico: tanque con clipboard. Sin marcas de terceros. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Cuerpo del tanque -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M36,38 Q54,28 72,38 L72,72 Q54,82 36,72 Z" />
+    <!-- Franja de nivel -->
+    <path android:fillColor="#4FC3F7"
+        android:pathData="M36,58 Q54,66 72,58 L72,72 Q54,82 36,72 Z" />
+    <!-- Cabezal de limpieza -->
+    <path android:fillColor="#002C77"
+        android:pathData="M52,30 L56,30 L56,46 L52,46 Z" />
+    <path android:fillColor="#002C77"
+        android:pathData="M54,50 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+</vector>

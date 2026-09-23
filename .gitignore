@@ -1,0 +1,20 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/app/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+/toolchain/
+/dist/
+/build/
+keystore/debug.jks
+
+# Clave de firma: NUNCA en el repositorio (es público). En CI se usa desde secretos.
+keystore/
+keystore.properties
+*.jks
+evidence/

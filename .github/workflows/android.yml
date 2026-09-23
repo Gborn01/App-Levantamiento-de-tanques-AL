@@ -1,0 +1,80 @@
+name: Android CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # Firma release opcional: si estos secretos existen, la APK release sale firmada con la clave del proyecto.
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Preparar firma release (desde secretos)
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          mkdir -p keystore
+          echo "$KEYSTORE_BASE64" | base64 -d > keystore/levantamiento-release.jks
+          {
+            echo "storeFile=keystore/levantamiento-release.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=levantamiento"
+            echo "keyPassword=$KEYSTORE_PASSWORD"
+          } > keystore.properties
+
+      - name: Compilar APK debug y release (Gradle)
+        run: ./gradlew --stacktrace assembleDebug assembleRelease
+
+      - name: Subir APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Prueba de arranque en emulador (sin red) + logcat
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            mkdir -p evidence
+            adb shell svc wifi disable || true
+            adb shell svc data disable || true
+            adb install -r app/build/outputs/apk/debug/*.apk
+            adb logcat -c
+            adb shell am start -W -n com.jarabaimport.levantamiento/.ui.home.MainActivity
+            sleep 8
+            adb exec-out screencap -p > evidence/inicio.png || true
+            adb logcat -d > evidence/logcat.txt || true
+            adb logcat -d -b crash > evidence/crash.txt || true
+            if grep -q "FATAL EXCEPTION" evidence/logcat.txt; then echo "LA APP SE CERRÓ:"; grep -A40 "FATAL EXCEPTION" evidence/logcat.txt; exit 1; fi
+            adb shell pidof com.jarabaimport.levantamiento || (echo "La app no está en ejecución"; exit 1)
+            echo "ARRANQUE OK"
+
+      - name: Subir evidencias
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence
+          path: evidence/

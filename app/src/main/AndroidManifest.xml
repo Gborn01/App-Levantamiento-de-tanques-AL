@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Sin permiso de INTERNET: la app funciona 100 % offline por diseño. -->
+    <!-- La cámara se usa a través de la app de cámara del sistema (no requiere permiso). -->
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".LevantamientoApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Levantamiento">
+
+        <activity
+            android:name=".ui.home.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.clients.ClientListActivity" android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity android:name=".ui.clients.ClientDetailActivity" />
+        <activity android:name=".ui.clients.ClientFormActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.home.RecentActivity" />
+        <activity android:name=".util.CrashReportActivity" />
+        <activity
+            android:name=".ui.tank.TankWizardActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity android:name=".ui.tank.TankSummaryActivity" />
+
+        <provider
+            android:name=".util.AppFileProvider"
+            android:authorities="com.jarabaimport.levantamiento.files"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>
