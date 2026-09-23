@@ -203,9 +203,8 @@ def fill(label, value):
 
 
 def hide_keyboard():
-    if sh("dumpsys input_method | grep -E 'mInputShown=true|mIsInputViewShown=true'").strip():
-        sh("input keyevent KEYCODE_BACK")
-        time.sleep(0.6)
+    """El teclado en pantalla está desactivado durante la prueba (ver main): no hace falta cerrarlo.
+    No se usa ATRÁS para esto: si el teclado no está visible, ATRÁS saldría de la pantalla."""
 
 
 def has(label, exact=False):
@@ -337,6 +336,7 @@ def main():
     # Sin teclado en pantalla: 'input text' envía las teclas directamente al campo enfocado
     for ime in sh("ime list -s").split():
         sh(f"ime disable {ime}")
+    print("Teclados activos tras desactivar:", sh("ime list -s").split() or "ninguno")
     if apk:
         print(adb("install", "-r", "-g", apk, timeout=180))
     sh(f"pm clear {PKG}")

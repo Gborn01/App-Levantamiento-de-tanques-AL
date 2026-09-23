@@ -3,6 +3,14 @@ name: Android CI
 on:
   push:
   workflow_dispatch:
+    inputs:
+      guardar_capturas:
+        description: "Guardar las capturas del recorrido en docs/capturas (commit en la rama)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -66,3 +74,15 @@ jobs:
         with:
           name: evidence
           path: evidence/
+
+      - name: Guardar capturas en docs/capturas (solo ejecución manual)
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.guardar_capturas
+        run: |
+          rm -rf docs/capturas && mkdir -p docs/capturas
+          cp evidence/*.png docs/capturas/ || true; cp evidence/resultados.md docs/capturas/ || true
+          rm -f docs/capturas/prueba_tanque.png
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/capturas
+          git commit -m "Capturas del recorrido de aceptación en emulador [skip ci]" || echo "Sin cambios"
+          git push origin HEAD:${{ github.ref_name }}
