@@ -191,7 +191,7 @@ def fill(label, value):
                     if norm(n.text).lstrip("★ ").rstrip(" *") == norm(label) and not n.cls.endswith("EditText")), None)
         if idx is not None:
             et = next((n for n in nodes[idx + 1:] if n.cls.endswith("EditText")), None)
-            if et and et.cy < H * 0.60:
+            if et and et.cy < H * 0.88:
                 sh(f"input tap {et.cx} {et.cy}")
                 time.sleep(0.6)
                 sh("input keyevent KEYCODE_MOVE_END")
