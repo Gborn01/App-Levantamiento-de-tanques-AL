@@ -129,13 +129,14 @@ def find(label, nodes=None, exact=False, cls=None):
 def swipe_up():
     # Con el teclado abierto el gesto caería sobre él (escritura por deslizamiento): cerrarlo antes
     hide_keyboard()
-    sh(f"input swipe {W // 2} {int(H * 0.65)} {W // 2} {int(H * 0.30)} 300")
+    # Gesto en la mitad superior: nunca cae sobre el teclado en pantalla
+    sh(f"input swipe {W // 2} {int(H * 0.55)} {W // 2} {int(H * 0.18)} 400")
     time.sleep(0.8)
 
 
 def swipe_down():
     hide_keyboard()
-    sh(f"input swipe {W // 2} {int(H * 0.30)} {W // 2} {int(H * 0.65)} 300")
+    sh(f"input swipe {W // 2} {int(H * 0.18)} {W // 2} {int(H * 0.55)} 400")
     time.sleep(0.8)
 
 
@@ -190,7 +191,7 @@ def fill(label, value):
                     if norm(n.text).lstrip("★ ").rstrip(" *") == norm(label) and not n.cls.endswith("EditText")), None)
         if idx is not None:
             et = next((n for n in nodes[idx + 1:] if n.cls.endswith("EditText")), None)
-            if et and et.cy < H * 0.80:
+            if et and et.cy < H * 0.60:
                 sh(f"input tap {et.cx} {et.cy}")
                 time.sleep(0.6)
                 sh("input keyevent KEYCODE_MOVE_END")
@@ -336,6 +337,7 @@ def main():
     # Sin teclado en pantalla: 'input text' envía las teclas directamente al campo enfocado
     for ime in sh("ime list -s").split():
         sh(f"ime disable {ime}")
+        sh(f"pm disable-user --user 0 {ime.split('/')[0]}")
     print("Teclados activos tras desactivar:", sh("ime list -s").split() or "ninguno")
     if apk:
         print(adb("install", "-r", "-g", apk, timeout=180))
