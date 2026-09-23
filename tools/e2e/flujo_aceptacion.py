@@ -87,7 +87,8 @@ def dump():
 
 
 def norm(s):
-    return s.replace(" ", " ").strip()
+    # Botones y títulos de sección se muestran en MAYÚSCULAS: comparar sin distinguir mayúsculas
+    return s.replace("\u00a0", " ").strip().casefold()
 
 
 def find(label, nodes=None, exact=False, cls=None):
@@ -95,8 +96,9 @@ def find(label, nodes=None, exact=False, cls=None):
     for n in nodes:
         if cls and not n.cls.endswith(cls):
             continue
+        lab = norm(label)
         for v in (norm(n.text), norm(n.desc)):
-            if v and ((v == label) if exact else (label in v)):
+            if v and ((v == lab) if exact else (lab in v)):
                 return n
     return None
 
@@ -159,7 +161,7 @@ def fill(label, value):
     for _ in range(15):
         nodes = dump()
         idx = next((i for i, n in enumerate(nodes)
-                    if norm(n.text).lstrip("★ ").rstrip(" *") == label and not n.cls.endswith("EditText")), None)
+                    if norm(n.text).lstrip("★ ").rstrip(" *") == norm(label) and not n.cls.endswith("EditText")), None)
         if idx is not None:
             et = next((n for n in nodes[idx + 1:] if n.cls.endswith("EditText")), None)
             if et and et.cy < H * 0.80:
@@ -202,6 +204,7 @@ def check(n, name, fn):
     except Exception as e:  # noqa: BLE001
         results.append((n, name, False, str(e)))
         print("  FALLO:", e)
+        print("  En pantalla:", " | ".join(x.text or x.desc for x in dump() if (x.text or x.desc))[:1500])
         shot(f"fallo_criterio_{n}")
 
 
@@ -567,7 +570,7 @@ def main():
     def c14():
         go_home()
         tap("Clientes", exact=True)
-        n = find("Buscar cliente", cls="EditText")
+        n = next(x for x in dump() if x.cls.endswith("EditText"))
         sh(f"input tap {n.cx} {n.cy}")
         time.sleep(0.5)
         type_text("Mayonesa")
@@ -576,7 +579,7 @@ def main():
             raise AssertionError("La búsqueda por producto no encontró el tanque")
         shot("busqueda_tanque")
         sh("input keyevent " + " ".join(["KEYCODE_DEL"] * 10))
-        n = find("Mayonesa", cls="EditText") or find("Buscar cliente", cls="EditText")
+        n = next(x for x in dump() if x.cls.endswith("EditText"))
         sh(f"input tap {n.cx} {n.cy}")
         sh("input keyevent KEYCODE_MOVE_END")
         sh("input keyevent " + " ".join(["KEYCODE_DEL"] * 10))

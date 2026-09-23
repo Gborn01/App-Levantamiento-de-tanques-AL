@@ -18,3 +18,4 @@ keystore/
 keystore.properties
 *.jks
 evidence/
+__pycache__/
