@@ -11,11 +11,11 @@
 | 7 | Cerrar la app | ✅ | Proceso detenido (force-stop) |
 | 8 | Reabrir la app | ✅ | Reabierta correctamente |
 | 9 | Ver los datos guardados | ✅ | Cliente, 3 tanques y datos del levantamiento persisten tras reiniciar |
-| 10 | Editar tanque | ❌ | El resumen no refleja el producto editado |
-| 11 | Duplicar tanque | ❌ | La copia no recibió el siguiente código (TK-003) |
+| 10 | Editar tanque | ✅ | Producto cambiado a 'Salsa picante' y visible en el resumen |
+| 11 | Duplicar tanque | ✅ | Copia creada con código TK-003 |
 | 12 | Tomar fotografías | ✅ | Foto añadida con cámara; archivos en disco: 1 |
 | 13 | Ver las fotos en el tanque | ✅ | La foto aparece en el resumen del tanque |
 | 14 | Buscar clientes y tanques | ✅ | Búsqueda por producto y por nombre de cliente |
-| 15 | Generar PDF | ✅ | Levantamiento_Cliente_Prueba_TK-001_20260923_1704.pdf (615 KB) |
-| 16 | Exportar CSV | ✅ | Tanque_Cliente_Prueba_TK-001_20260923_1704.csv (2 líneas) |
+| 15 | Generar PDF | ✅ | Levantamiento_Cliente_Prueba_TK-001_20260923_1718.pdf (615 KB) |
+| 16 | Exportar CSV | ✅ | Tanque_Cliente_Prueba_TK-001_20260923_1718.csv (2 líneas) |
 | 17 | Todo sin Internet | ✅ | Sin permiso INTERNET; modo avión=1; wifi y datos desactivados durante toda la prueba |
