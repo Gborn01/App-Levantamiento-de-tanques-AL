@@ -151,8 +151,8 @@ def seek(label, exact=False, cls=None, max_swipes=14, from_top=False):
         scroll_top()
     for _ in range(max_swipes + 1):
         n = find(label, exact=exact, cls=cls)
-        # Evitar elementos tapados por la barra inferior del asistente / teclado
-        if n and n.cy < H * 0.86:
+        # Excluir solo la barra de navegación del sistema (la barra del asistente recorta el contenido)
+        if n and n.cy < H * 0.94:
             return n
         swipe_up()
     return None
@@ -191,7 +191,7 @@ def fill(label, value):
                     if norm(n.text).lstrip("★ ").rstrip(" *") == norm(label) and not n.cls.endswith("EditText")), None)
         if idx is not None:
             et = next((n for n in nodes[idx + 1:] if n.cls.endswith("EditText")), None)
-            if et and et.cy < H * 0.88:
+            if et and et.cy < H * 0.94:
                 sh(f"input tap {et.cx} {et.cy}")
                 time.sleep(0.6)
                 sh("input keyevent KEYCODE_MOVE_END")
