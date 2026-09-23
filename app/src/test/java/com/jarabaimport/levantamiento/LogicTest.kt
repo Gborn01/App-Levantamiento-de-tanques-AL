@@ -15,11 +15,12 @@ import com.jarabaimport.levantamiento.domain.selection.SelectionInput
 import com.jarabaimport.levantamiento.export.CsvExporter
 import java.io.ByteArrayOutputStream
 import kotlin.math.abs
-import kotlin.system.exitProcess
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 /*
- * Pruebas de la lógica de negocio (sin Android). Ejecutar con:  ./build.sh test
- * Mini-framework propio para no depender de librerías externas.
+ * Pruebas de la lógica de negocio (sin Android). Ejecutar con:  ./gradlew testDebugUnitTest
+ * Mini-framework propio: cada comprobación se acumula y JUnit informa de todos los fallos juntos.
  */
 private var passed = 0
 private val failures = mutableListOf<String>()
@@ -31,7 +32,17 @@ private fun eq(name: String, expected: Any?, actual: Any?) = check(name, expecte
 private fun near(name: String, expected: Double, actual: Double?, tol: Double) =
     check(name, actual != null && abs(expected - actual) <= tol) { "esperado≈$expected obtenido=$actual" }
 
-fun main() {
+class LogicTest {
+    @Test
+    fun logicaDeNegocio() {
+        val failures = runLogicChecks()
+        assertTrue("FALLOS (${failures.size}):\n" + failures.joinToString("\n") { "  ✗ $it" }, failures.isEmpty())
+    }
+}
+
+internal fun runLogicChecks(): List<String> {
+    passed = 0
+    failures.clear()
     val sample = SampleTank.bepensaTk001(1)
 
     // Cálculos geométricos
@@ -123,10 +134,6 @@ fun main() {
     // Selección futura: V1 no recomienda
     eq("V1 sin recomendaciones", 0, NoSelectionYet.evaluate(SelectionInput.from(sample)).candidates.size)
 
-    println("Pruebas superadas: $passed")
-    if (failures.isNotEmpty()) {
-        println("FALLOS (${failures.size}):"); failures.forEach { println("  ✗ $it") }
-        exitProcess(1)
-    }
-    println("TODAS LAS PRUEBAS OK")
+    println("Pruebas superadas: $passed · fallos: ${failures.size}")
+    return failures.toList()
 }

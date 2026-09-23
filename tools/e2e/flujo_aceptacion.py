@@ -104,12 +104,15 @@ def find(label, nodes=None, exact=False, cls=None):
 
 
 def swipe_up():
-    sh(f"input swipe {W // 2} {int(H * 0.72)} {W // 2} {int(H * 0.30)} 300")
+    # Con el teclado abierto el gesto caería sobre él (escritura por deslizamiento): cerrarlo antes
+    hide_keyboard()
+    sh(f"input swipe {W // 2} {int(H * 0.65)} {W // 2} {int(H * 0.30)} 300")
     time.sleep(0.8)
 
 
 def swipe_down():
-    sh(f"input swipe {W // 2} {int(H * 0.30)} {W // 2} {int(H * 0.75)} 300")
+    hide_keyboard()
+    sh(f"input swipe {W // 2} {int(H * 0.30)} {W // 2} {int(H * 0.65)} 300")
     time.sleep(0.8)
 
 
@@ -177,7 +180,7 @@ def fill(label, value):
 
 
 def hide_keyboard():
-    if "mInputShown=true" in sh("dumpsys input_method | grep mInputShown"):
+    if sh("dumpsys input_method | grep -E 'mInputShown=true|mIsInputViewShown=true'").strip():
         sh("input keyevent KEYCODE_BACK")
         time.sleep(0.6)
 
@@ -303,6 +306,9 @@ def main():
     sh("settings put global stay_on_while_plugged_in 7")
     sh("input keyevent KEYCODE_WAKEUP")
     sh("wm dismiss-keyguard")
+    # Sin teclado en pantalla: 'input text' envía las teclas directamente al campo enfocado
+    for ime in sh("ime list -s").split():
+        sh(f"ime disable {ime}")
     if apk:
         print(adb("install", "-r", "-g", apk, timeout=180))
     sh(f"pm clear {PKG}")
@@ -338,7 +344,7 @@ def main():
     check(2, "Crear cliente", c2)
 
     def c3():
-        if not has("Cliente Prueba"):
+        if not has("Detalle del cliente") or not has("Cliente Prueba"):
             raise AssertionError("El detalle no muestra el cliente")
         shot("detalle_cliente")
         return "Detalle del cliente abierto"
@@ -575,7 +581,8 @@ def main():
         time.sleep(0.5)
         type_text("Mayonesa")
         hide_keyboard()
-        if not wait_for("Tanques (1)") or not has("Tanque Mayonesa"):
+        # "Tanque de mayonesa" (datos de ejemplo) también coincide; basta con que aparezca el nuestro
+        if not wait_for("Tanque Mayonesa"):
             raise AssertionError("La búsqueda por producto no encontró el tanque")
         shot("busqueda_tanque")
         sh("input keyevent " + " ".join(["KEYCODE_DEL"] * 10))

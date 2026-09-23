@@ -1,7 +1,7 @@
 # Levantamiento de Tanques – V1
 
-> **Estado:** las APK compiladas sin Gradle se cierran al abrir en el teléfono de prueba. Ver `HANDOFF_CLAUDE_CODE.md`
-> para compilar con Gradle/GitHub Actions y corregirlo.
+> **Estado:** compilada con Gradle en GitHub Actions y verificada en emulador Android 13 sin red (ver §10).
+> Corregido el cierre al abrir en Android 11+ (ver §10.1).
 
 App Android **100 % offline** para registrar en campo el levantamiento técnico de tanques de producción
 (clientes → tanques → levantamiento), como base para la posterior selección de cabezales de limpieza.
@@ -14,61 +14,59 @@ App Android **100 % offline** para registrar en campo el levantamiento técnico 
 
 ## 1. Entregables
 
-| Archivo | Uso |
+Todo se genera en **GitHub Actions** (pestaña *Actions* del repositorio → última ejecución de *Android CI*):
+
+| Artefacto | Contenido |
 |---|---|
-| `dist/LevantamientoTanques-1.0.0-release.apk` | **APK para instalar en los teléfonos** (firmada con la clave de release). |
-| `dist/LevantamientoTanques-1.0.0-debug.apk` | APK de pruebas (firma de depuración). |
-| `keystore/levantamiento-release.jks` + `keystore.properties` | Clave de firma de release. **Guárdelas en lugar seguro** (ver §4). |
-| `app/src/...` | Código fuente completo. |
-| `build.sh` | Compilación por línea de comandos (sin Android Studio). |
-| `tools/setup-toolchain.sh` | Descarga las herramientas de compilación para `build.sh`. |
+| `apks` | `app-release.apk` (**la que se instala en los teléfonos**, firmada con la clave del proyecto) y `app-debug.apk`. |
+| `evidence` | Capturas de pantalla del recorrido de aceptación, `resultados.md`, PDF y CSV generados por la app, `logcat.txt`. |
+
+> Si los secretos de firma no están configurados (§4), la release sale como `app-release-unsigned.apk`, que **no se puede instalar**.
 
 ---
 
 ## 2. Instalar la APK en el teléfono
 
-1. Copie `LevantamientoTanques-1.0.0-release.apk` al teléfono (WhatsApp, correo, cable USB o Google Drive).
-2. Ábrala desde el teléfono. Si Android lo pide, permita **"Instalar apps de origen desconocido"** para esa app (Archivos, Chrome, WhatsApp…).
-3. Pulse **Instalar**. Requiere **Android 8.0 o superior**.
-4. Para actualizar a una versión nueva, instale la nueva APK encima: se conservan los datos (siempre que se firme con la misma clave).
+1. Descargue el artefacto `apks` (es un .zip) y extraiga `app-release.apk`.
+2. Copie la APK al teléfono (WhatsApp, correo, cable USB o Google Drive) y ábrala.
+3. Si Android lo pide, permita **"Instalar apps de origen desconocido"** para esa app (Archivos, Chrome, WhatsApp…).
+4. Pulse **Instalar**. Requiere **Android 8.0 o superior**.
+5. Para actualizar a una versión nueva, instale la nueva APK encima: se conservan los datos (siempre que se firme con la misma clave).
 
+> Si en el teléfono había una versión anterior firmada con otra clave (p. ej. una APK de depuración), desinstálela primero.
 > Play Protect puede mostrar un aviso por ser una app que no viene de Google Play; es normal en apps internas. Elija "Instalar de todas formas".
 
-Con cable USB y `adb`: `adb install -r dist/LevantamientoTanques-1.0.0-release.apk`
+Con cable USB y `adb`: `adb install -r app-release.apk`
 
 ---
 
 ## 3. Compilar
 
-### Opción A – Android Studio (recomendada para seguir desarrollando)
-1. Instale Android Studio (Ladybug o posterior) con el SDK de Android 35.
-2. *File → Open* → carpeta del proyecto. Android Studio descarga Gradle y el plugin de Android.
-3. Compilar:
-   - Debug: `./gradlew assembleDebug` → `app/build/outputs/apk/debug/`
-   - Release firmada: `./gradlew assembleRelease` → `app/build/outputs/apk/release/` (usa `keystore.properties`)
+Automático: cada `git push` ejecuta `.github/workflows/android.yml` (pruebas de lógica → APK debug y release →
+recorrido de los 17 criterios en un emulador sin red).
 
-> Nota: las APK entregadas se compilaron con la Opción B. La configuración Gradle es mínima (sin dependencias) y está
-> incluida para trabajar en Android Studio, pero no se pudo ejecutar en el entorno donde se generó el proyecto.
-
-### Opción B – Línea de comandos, sin Android Studio (Linux o WSL en Windows)
-Requiere Java 17+, `curl`, `unzip`, `zip`.
+En local (Android Studio Ladybug o posterior, o solo el SDK de Android 35 + Java 17):
 ```bash
-./tools/setup-toolchain.sh      # una sola vez: descarga Kotlin, D8, aapt2, zipalign y android.jar (~200 MB)
-./build.sh test                 # pruebas de lógica (58 comprobaciones)
-./build.sh debug                # dist/LevantamientoTanques-1.0.0-debug.apk
-./build.sh release              # dist/LevantamientoTanques-1.0.0-release.apk
+./gradlew testDebugUnitTest   # pruebas de lógica (JUnit, JVM)
+./gradlew assembleDebug       # app/build/outputs/apk/debug/
+./gradlew assembleRelease     # app/build/outputs/apk/release/ (firmada si existe keystore.properties)
+python3 tools/e2e/flujo_aceptacion.py app/build/outputs/apk/debug/app-debug.apk   # con un emulador/teléfono conectado
 ```
-El script hace: `aapt2` (recursos) → `kotlinc` (Kotlin) → `D8` (dex) → `zipalign` → firma v2+v3 (`apksig`) → verificación.
 
-Para cambiar la versión: `VERSION_CODE` / `VERSION_NAME` en `build.sh` y en `app/build.gradle.kts`.
+Para cambiar la versión: `versionCode` / `versionName` en `app/build.gradle.kts`.
 
 ---
 
 ## 4. Firma de release (importante)
 
-- `keystore/levantamiento-release.jks` y `keystore.properties` (contraseñas) se generaron para este proyecto.
-- **Sin ese archivo no podrá publicar actualizaciones** que se instalen encima de la versión actual (habría que desinstalar y se perderían los datos del teléfono).
-- Haga una copia en un lugar seguro y no lo comparta públicamente.
+La clave (`levantamiento-release.jks`, alias `levantamiento`) **no está en el repositorio**, porque el repositorio es público.
+- **En GitHub Actions** se usa desde dos secretos (*Settings → Secrets and variables → Actions → New repository secret*):
+  - `KEYSTORE_BASE64`: el archivo `.jks` codificado en base64 (`base64 -w0 levantamiento-release.jks`).
+  - `KEYSTORE_PASSWORD`: la contraseña del almacén (es la misma para la clave).
+- **En local**: copie `keystore/levantamiento-release.jks` y `keystore.properties` en la raíz del proyecto
+  (están en `.gitignore`, no se suben).
+- **Sin esa clave no podrá publicar actualizaciones** que se instalen encima de la versión actual (habría que desinstalar
+  y se perderían los datos del teléfono). Guarde una copia en un lugar seguro y no la comparta.
 
 ---
 
@@ -126,10 +124,8 @@ Código: `app/src/main/java/.../data/sample/SampleTank.kt` y `SampleData.kt`.
 
 ```
 LevantamientoTanques/
-├── build.sh                      Compilación sin Android Studio
-├── tools/setup-toolchain.sh      Descarga de herramientas para build.sh
-├── tools/signer/                 Firmador/verificador de APK (apksig)
-├── keystore/ + keystore.properties   Clave de release (¡guardar!)
+├── .github/workflows/android.yml CI: pruebas, APK debug/release, criterios en emulador
+├── tools/e2e/                    Recorrido automático de los 17 criterios (adb + uiautomator)
 ├── build.gradle.kts, settings.gradle.kts, gradlew…   Proyecto Gradle / Android Studio
 └── app/src/
     ├── main/AndroidManifest.xml  Pantallas, proveedor de archivos, SIN permiso de Internet
@@ -157,7 +153,7 @@ LevantamientoTanques/
     │       ├── clients/          Lista + búsqueda, detalle, formulario
     │       ├── tank/             Asistente (8 pasos), resumen, panel de firma
     │       └── photos/           Galería por categorías y visor
-    └── test/…/TestRunner.kt      Pruebas de lógica (./build.sh test)
+    └── test/…/LogicTest.kt       Pruebas de lógica (./gradlew testDebugUnitTest)
 ```
 
 ---
@@ -167,7 +163,7 @@ LevantamientoTanques/
 Capas con dependencias en un solo sentido: **UI → Repositorios → Base de datos**, y todas usan **Dominio**.
 
 - **Dominio** (`domain/`): Kotlin puro, sin Android. Cálculos, validación, 7 datos principales, estados,
-  duplicado. Es lo que se prueba con `./build.sh test` y lo que usará el futuro módulo de selección.
+  duplicado. Es lo que se prueba con `./gradlew testDebugUnitTest` y lo que usará el futuro módulo de selección.
 - **Datos** (`data/`): SQLite nativo con claves foráneas y borrado en cascada
   (Cliente 1→N Tanques, Tanque 1→N Fotografías). IDs numéricos + UUID único por registro.
   Para cambiar el esquema: subir `DbHelper.VERSION` y añadir la migración en `onUpgrade` (nunca borrar tablas).

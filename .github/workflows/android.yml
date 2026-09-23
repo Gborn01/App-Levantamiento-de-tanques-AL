@@ -32,8 +32,8 @@ jobs:
             echo "keyPassword=$KEYSTORE_PASSWORD"
           } > keystore.properties
 
-      - name: Compilar APK debug y release (Gradle)
-        run: ./gradlew --stacktrace assembleDebug assembleRelease
+      - name: Pruebas de lógica + APK debug y release (Gradle)
+        run: ./gradlew --stacktrace testDebugUnitTest assembleDebug assembleRelease
 
       - name: Subir APKs
         uses: actions/upload-artifact@v4

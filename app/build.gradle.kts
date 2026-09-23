@@ -51,10 +51,10 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    // Las pruebas de lógica están en src/test y se ejecutan con ./build.sh test (sin JUnit).
-    sourceSets["test"].java.setSrcDirs(emptyList<String>())
 }
 
 dependencies {
-    // Sin dependencias externas (a propósito): máxima estabilidad y compilación offline.
+    // La app no tiene dependencias externas (a propósito): máxima estabilidad.
+    // JUnit solo se usa para las pruebas de lógica (src/test); no se incluye en la APK.
+    testImplementation("junit:junit:4.13.2")
 }

@@ -8,8 +8,6 @@
 /captures/
 .externalNativeBuild/
 .cxx/
-/toolchain/
-/dist/
 /build/
 keystore/debug.jks
 
