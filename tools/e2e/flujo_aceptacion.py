@@ -72,18 +72,41 @@ class Node:
         return f"<{self.cls.split('.')[-1]} '{self.text or self.desc}' {self.bounds}>"
 
 
-def dump():
+def dump(_retry=True):
     for _ in range(5):
         out = sh("uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; cat /sdcard/ui.xml")
         i = out.find("<?xml")
         if i >= 0:
             try:
                 root = ET.fromstring(out[i:])
-                return [Node(e) for e in root.iter("node")]
+                nodes = [Node(e) for e in root.iter("node")]
             except ET.ParseError:
-                pass
+                nodes = None
+            if nodes is not None:
+                if _retry and dismiss_system_dialog(nodes):
+                    return dump(_retry=False)
+                return nodes
         time.sleep(1)
     return []
+
+
+SYSTEM_DIALOG = ("isn't responding", "keeps stopping", "has stopped", "no responde", "se detuvo")
+
+
+def dismiss_system_dialog(nodes):
+    """Cierra diálogos del sistema de OTRAS apps (p. ej. "Pixel Launcher isn't responding") que tapan la pantalla.
+    Un cierre de nuestra app se detecta aparte con el logcat (crashed())."""
+    msg = next((n for n in nodes if any(k in n.text for k in SYSTEM_DIALOG)), None)
+    if not msg or "Levantamiento" in msg.text:
+        return False
+    btn = next((n for n in nodes if n.text in ("Wait", "Esperar", "Close app", "Cerrar app", "OK", "Aceptar")), None)
+    print("  (diálogo del sistema cerrado:", msg.text, ")")
+    if btn:
+        sh(f"input tap {btn.cx} {btn.cy}")
+    else:
+        sh("am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS")
+    time.sleep(1.5)
+    return True
 
 
 def norm(s):
@@ -306,6 +329,11 @@ def main():
     sh("settings put global stay_on_while_plugged_in 7")
     sh("input keyevent KEYCODE_WAKEUP")
     sh("wm dismiss-keyguard")
+    # El emulador de CI es lento: dejar que el sistema se asiente y no mostrar diálogos de "no responde"
+    sh("settings put global hide_error_dialogs 1")
+    sh("input keyevent KEYCODE_HOME")
+    time.sleep(15)
+    dump()
     # Sin teclado en pantalla: 'input text' envía las teclas directamente al campo enfocado
     for ime in sh("ime list -s").split():
         sh(f"ime disable {ime}")
@@ -318,6 +346,7 @@ def main():
     subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "imagen_prueba.py"), f"{OUT}/prueba_tanque.png"], check=True)
     adb("push", f"{OUT}/prueba_tanque.png", "/sdcard/Pictures/prueba_tanque.png")
     sh("am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Pictures/prueba_tanque.png")
+    sh("content call --method scan_volume --uri content://media --arg external_primary")
 
     def c1():
         launch()
