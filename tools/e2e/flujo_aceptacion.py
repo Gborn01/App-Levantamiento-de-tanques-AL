@@ -514,7 +514,7 @@ def main():
             go_home(); tap("Clientes", exact=True); tap("Cliente Prueba")
         if not wait_for("Tanques (3)"):
             raise AssertionError("Tras duplicar el cliente no tiene 3 tanques")
-        if not has("TK-003"):
+        if not seek("TK-003"):
             raise AssertionError("La copia no recibió el siguiente código (TK-003)")
         shot("cliente_tres_tanques")
         return "Copia creada con código TK-003"
@@ -532,7 +532,8 @@ def main():
         time.sleep(1.5)
         sh("input keyevent KEYCODE_BACK")
         time.sleep(2)
-        if not wait_for("Salsa picante"):
+        wait_for("Resumen del levantamiento")
+        if not seek("Salsa picante", from_top=True):
             raise AssertionError("El resumen no refleja el producto editado")
         shot("tanque_editado")
         return "Producto cambiado a 'Salsa picante' y visible en el resumen"
